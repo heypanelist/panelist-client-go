@@ -25,6 +25,9 @@ type ServerConfig struct {
 	Port int
 }
 
+type Context struct {
+}
+
 type Config struct {
 	ClientName string
 	Server     ServerConfig
