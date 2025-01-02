@@ -2,6 +2,8 @@ package output
 
 import (
 	"fmt"
+
+	"github.com/heypanelist/panelist-client-go/common"
 )
 
 type Icon struct {
