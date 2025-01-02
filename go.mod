@@ -2,10 +2,7 @@ module github.com/heypanelist/panelist-client-go
 
 go 1.22.2
 
-require (
-	github.com/gammazero/nexus/v3 v3.2.2
-	google.golang.org/protobuf v1.36.1
-)
+require github.com/gammazero/nexus/v3 v3.2.2
 
 require (
 	github.com/gorilla/websocket v1.5.3 // indirect
