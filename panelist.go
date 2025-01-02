@@ -30,11 +30,11 @@ type Config struct {
 }
 
 // New creates a new instance of the Panelist client
-func New(config Config) (*Panelist, error) {
+func New(config Config) *Panelist {
 	p := &Panelist{
 		config: config,
 	}
-	return p, nil
+	return p
 }
 
 // AddPages adds the provided pages and makes them visible to
