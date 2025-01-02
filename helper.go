@@ -16,15 +16,33 @@ func send[I any, O any](
 	uri internal.URI,
 	data I,
 ) (*Response[O], error) {
-	response, err := wampClient.Call(ctx, uri.String(), nil, nil, wamp.Dict{"data": data}, nil)
+
+	bytes, err := json.Marshal(data)
+	if err != nil {
+		return nil, fmt.Errorf("panelist: failed to process request: %w", err)
+	}
+	response, err := wampClient.Call(
+		ctx,
+		uri.String(),
+		nil,
+		nil,
+		wamp.Dict{"data": string(bytes)},
+		nil,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("panelist: failed to send message: %w", err)
 	}
 
 	output := Response[O]{}
-	if err := json.Unmarshal(response.ArgumentsKw["body"].([]byte), &output.Body); err != nil {
-		return nil, fmt.Errorf("panelist: failed to process response: %w", err)
+	str, ok := response.ArgumentsKw["data"].(string)
+	if !ok {
+		output.Body = nil
+	} else {
+		if err := json.Unmarshal([]byte(str), &output.Body); err != nil {
+			return nil, fmt.Errorf("panelist: failed to process response: %w", err)
+		}
 	}
+
 	return &output, nil
 }
 
