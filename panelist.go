@@ -56,30 +56,33 @@ func (p *Panelist) AddPageGroups(pages ...Page) error {
 // This function blocks the current goroutine.
 func (p *Panelist) Listen() (err error) {
 	ctx := context.Background()
-	wampRouterUrl := fmt.Sprintf("ws://%s:%d/ws", p.config.ServerHost, p.config.ServerPort)
 
 	clientNameRegex := regexp.MustCompile(`^[a-z0-9-]{3,20}$`)
 	if !clientNameRegex.MatchString(p.config.Name) {
 		return fmt.Errorf(
-			"panelist: client name must be between 3 and 64 characters long and match the kebab-case format.",
+			"panelist: client name must be between 3 and 64 characters long and match the kebab-case format",
 		)
 	}
 	for _, page := range p.pages {
 		if err := page.Validate(); err != nil {
-			return fmt.Errorf("panelist: one or more of your pages have the error '%w'.", err)
+			return fmt.Errorf("panelist: one or more of your pages have the error '%w'", err)
 		}
 	}
 	for _, pageGroups := range p.pageGroups {
 		if err := pageGroups.Validate(); err != nil {
-			return fmt.Errorf("panelist: one or more of your page groups have the error '%w'.", err)
+			return fmt.Errorf("panelist: one or more of your page groups have the error '%w'", err)
 		}
 	}
 
-	if p.wampClient, err = wamp_client.ConnectNet(ctx, wampRouterUrl, wamp_client.Config{
+	println("TO BLOCK?!")
+
+	if p.wampClient, err = wamp_client.ConnectNet(ctx, fmt.Sprintf("tcp://%s:%d/", p.config.ServerHost, p.config.ServerPort), wamp_client.Config{
 		Realm: "panelist",
 	}); err != nil {
 		return fmt.Errorf("panelist: failed to connect to server: %w", err)
 	}
+
+	println("THIS MF BLOCKS!!!")
 
 	response, err := send[client.RegisterRequest, client.RegisterResponse](ctx,
 		p.wampClient,
