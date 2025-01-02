@@ -74,15 +74,11 @@ func (p *Panelist) Listen() (err error) {
 		}
 	}
 
-	println("TO BLOCK?!")
-
 	if p.wampClient, err = wamp_client.ConnectNet(ctx, fmt.Sprintf("tcp://%s:%d/", p.config.ServerHost, p.config.ServerPort), wamp_client.Config{
 		Realm: "panelist",
 	}); err != nil {
 		return fmt.Errorf("panelist: failed to connect to server: %w", err)
 	}
-
-	println("THIS MF BLOCKS!!!")
 
 	response, err := send[client.RegisterRequest, client.RegisterResponse](ctx,
 		p.wampClient,
