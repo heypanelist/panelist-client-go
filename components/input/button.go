@@ -2,6 +2,7 @@ package input
 
 import (
 	"github.com/heypanelist/panelist-client-go"
+	"github.com/heypanelist/panelist-client-go/common"
 	"github.com/heypanelist/panelist-client-go/components/output"
 )
 
@@ -33,7 +34,7 @@ func (b Button) ComponentName() string {
 	return "button"
 }
 
-func (b *Button) Serialize(context panelist.Context) interface{} {
+func (b *Button) Serialize(context common.Context) interface{} {
 	return map[string]interface{}{
 		"name": b.ComponentName(),
 		"props": map[string]interface{}{

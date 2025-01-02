@@ -1,7 +1,7 @@
 package block
 
 import (
-	"github.com/heypanelist/panelist-client-go"
+	"github.com/heypanelist/panelist-client-go/common"
 	"github.com/heypanelist/panelist-client-go/components/input"
 )
 
@@ -15,7 +15,7 @@ func (ph PageHeader) ComponentName() string {
 	return "page-header"
 }
 
-func (ph PageHeader) Serialize(context panelist.Context) interface{} {
+func (ph PageHeader) Serialize(context common.Context) interface{} {
 	serializedButtons := make([]interface{}, len(ph.ActionButtons))
 	for i, button := range ph.ActionButtons {
 		serializedButtons[i] = button.Serialize(context)

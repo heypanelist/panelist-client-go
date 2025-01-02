@@ -2,8 +2,6 @@ package output
 
 import (
 	"fmt"
-
-	"github.com/heypanelist/panelist-client-go"
 )
 
 type Icon struct {
@@ -26,7 +24,7 @@ func (i Icon) ComponentName() string {
 	return "icon"
 }
 
-func (i Icon) Serialize(context panelist.Context) interface{} {
+func (i *Icon) Serialize(context common.Context) interface{} {
 	return map[string]interface{}{
 		"name": i.ComponentName(),
 		"props": map[string]interface{}{

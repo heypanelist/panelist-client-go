@@ -1,56 +1,99 @@
 package panelist
 
 import (
+	"context"
 	"fmt"
+	"regexp"
 
-	"github.com/gorilla/websocket"
+	wamp_client "github.com/gammazero/nexus/v3/client"
+	"github.com/heypanelist/panelist-client-go/internal/client"
 )
 
-type MessageType string
+const clientVersion = "go-0.0.1"
 
-const (
-	MessageTypeInit MessageType = "init"
-)
+// Panelist is the client that connects to the Panelist server
+type Panelist struct {
+	wampClient *wamp_client.Client
+	config     Config
 
-type panelist struct {
-	config        Config
-	websocketConn *websocket.Conn
-}
-
-type Panelist interface {
-}
-
-type ServerConfig struct {
-	Host string
-	Port int
-}
-
-type Context struct {
+	pages      []Page
+	pageGroups []PageGroup
 }
 
 type Config struct {
-	ClientName string
-	Server     ServerConfig
-	Pages      []string
+	// Name of this client.  Should be unique and in [kebab case](https://developer.mozilla.org/en-US/docs/Glossary/Kebab_case).
+	Name string
+	// Port number of the Panelist server.
+	ServerPort int
+	// Hostname of the Panelist server.
+	ServerHost string
 }
 
-func New(config Config) Panelist {
-	return &panelist{}
-}
-
-func (p *panelist) Init() error {
-	conn, _, err := websocket.DefaultDialer.Dial(fmt.Sprintf(`ws://%s:%d/ws`, p.config.Server.Host, p.config.Server.Port), nil)
-	if err != nil {
-		return fmt.Errorf("failed to connect to server: %w", err)
+// New creates a new instance of the Panelist client
+func New(config Config) (*Panelist, error) {
+	p := &Panelist{
+		config: config,
 	}
-	p.websocketConn = conn
-	p.sendMessage(MessageTypeInit, map[string]interface{}{"client_name": p.config.ClientName})
+	return p, nil
+}
+
+// AddPages adds the provided pages and makes them visible to
+// the Panelist server.  This function should be called before Listen.
+func (p *Panelist) AddPages(pages ...Page) error {
+	p.pages = append(p.pages, pages...)
 	return nil
 }
 
-func (p *panelist) sendMessage(messageType MessageType, message interface{}) error {
-	return p.websocketConn.WriteJSON(map[string]interface{}{
-		"type": messageType,
-		"data": message,
-	})
+// AddPageGroups adds the provided page groups and makes them visible to
+// the Panelist server.  This function should be called before Listen.
+func (p *Panelist) AddPageGroups(pages ...Page) error {
+	p.pages = append(p.pages, pages...)
+	return nil
+}
+
+// Listen listens for incoming messages and connects the client to the Panelist server
+// using the configuration provided. It should be called last, after all pages have been registered.
+// This function blocks the current goroutine.
+func (p *Panelist) Listen() (err error) {
+	ctx := context.Background()
+	wampRouterUrl := fmt.Sprintf("ws://%s:%d/ws", p.config.ServerHost, p.config.ServerPort)
+
+	clientNameRegex := regexp.MustCompile(`^[a-z0-9-]{3,20}$`)
+	if !clientNameRegex.MatchString(p.config.Name) {
+		return fmt.Errorf(
+			"panelist: client name must be between 3 and 64 characters long and match the kebab-case format.",
+		)
+	}
+	for _, page := range p.pages {
+		if err := page.Validate(); err != nil {
+			return fmt.Errorf("panelist: one or more of your pages have the error '%w'.", err)
+		}
+	}
+	for _, pageGroups := range p.pageGroups {
+		if err := pageGroups.Validate(); err != nil {
+			return fmt.Errorf("panelist: one or more of your page groups have the error '%w'.", err)
+		}
+	}
+
+	if p.wampClient, err = wamp_client.ConnectNet(ctx, wampRouterUrl, wamp_client.Config{
+		Realm: "panelist",
+	}); err != nil {
+		return fmt.Errorf("panelist: failed to connect to server: %w", err)
+	}
+
+	response, err := send[client.RegisterRequest, client.RegisterResponse](ctx,
+		p.wampClient,
+		client.UriClientRegister,
+		client.RegisterRequest{
+			Name:          p.config.Name,
+			ClientVersion: clientVersion,
+		})
+	if err != nil {
+		return fmt.Errorf("panelist: failed to register client: %w", err)
+	}
+	if response.Error != nil {
+		return fmt.Errorf("panelist: failed to register client: %w", *response.Error)
+	}
+
+	select {}
 }
