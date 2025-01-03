@@ -1,8 +1,6 @@
 package panelist
 
 import (
-	"errors"
-
 	"github.com/heypanelist/panelist-client-go/common"
 	"github.com/heypanelist/panelist-client-go/components/output"
 )
@@ -94,10 +92,6 @@ func (p *Page) Serialize(context common.Context) interface{} {
 }
 
 func (p *Page) GetPageListItem(context common.Context) map[string]interface{} {
-	if err := p.Validate(); err != nil || p.IsUnlisted(context) {
-		return nil
-	}
-
 	return map[string]interface{}{
 		"name": p.Name,
 		"title": (func() string {
@@ -136,14 +130,4 @@ func (p *Page) IsUnlisted(context common.Context) bool {
 		return true
 	}
 	return false
-}
-
-func (p *Page) Validate() error {
-	if p.Name == "" {
-		return errors.New("missing page name")
-	}
-	if p.Handler == nil {
-		return errors.New("missing page handler")
-	}
-	return nil
 }

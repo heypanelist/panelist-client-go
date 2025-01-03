@@ -1,12 +1,11 @@
-// panelist is the main package for the Panelist client library.  It provides the Panelist
-// struct which is the main entry point for the library as well as other main types and
+// Package panelist is the main package in the Panelist client library.  It provides the Panelist
+// struct which is the entry point for the library and houses other main types and
 // functions used to interact with the Panelist server.
 package panelist
 
 import (
 	"context"
 	"fmt"
-	"regexp"
 
 	wamp_client "github.com/gammazero/nexus/v3/client"
 	"github.com/heypanelist/panelist-client-go/internal/client"
@@ -25,11 +24,11 @@ type Panelist struct {
 type Config struct {
 	// Name of this client.  Should be unique and in [kebab case](https://developer.mozilla.org/en-US/docs/Glossary/Kebab_case).
 	Name string
-	// Workspace is the workspace on the server the client wants to join.
-	Workspace string
-	// Port number of the Panelist server.
+	// WorkspaceSlug is the workspace on the server the client wants to join.
+	WorkspaceSlug string
+	// ServerPort is the port of your Panelist server.
 	ServerPort int
-	// Hostname of the Panelist server.
+	// Hostname is the host of your Panelist server.
 	ServerHost string
 }
 
@@ -54,22 +53,15 @@ func (p *Panelist) AddPages(pages ...Page) error {
 func (p *Panelist) Listen() (err error) {
 	ctx := context.Background()
 
-	clientNameRegex := regexp.MustCompile(`^[a-z0-9-]{3,20}$`)
-	if !clientNameRegex.MatchString(p.config.Name) {
-		return fmt.Errorf(
-			"panelist: client name must be between 3 and 64 characters long and match the kebab-case format",
-		)
-	}
-	for _, page := range p.pages {
-		if err := page.Validate(); err != nil {
-			return fmt.Errorf("panelist: one or more of your pages have the error '%w'", err)
-		}
-	}
-
 	if p.wampClient, err = wamp_client.ConnectNet(ctx, fmt.Sprintf("tcp://%s:%d/", p.config.ServerHost, p.config.ServerPort), wamp_client.Config{
 		Realm: "panelist",
 	}); err != nil {
 		return fmt.Errorf("panelist: failed to connect to server: %w", err)
+	}
+
+	pages := []string{}
+	for _, page := range p.pages {
+		pages = append(pages, page.Name)
 	}
 
 	response, err := send[client.RegisterRequest, client.RegisterResponse](ctx,
@@ -78,6 +70,8 @@ func (p *Panelist) Listen() (err error) {
 		client.RegisterRequest{
 			Name:          p.config.Name,
 			ClientVersion: clientVersion,
+			WorkspaceSlug: p.config.WorkspaceSlug,
+			Pages:         pages,
 		})
 	if err != nil {
 		return fmt.Errorf("panelist: failed to register client: %w", err)
