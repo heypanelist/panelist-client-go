@@ -1,3 +1,6 @@
+// panelist is the main package for the Panelist client library.  It provides the Panelist
+// struct which is the main entry point for the library as well as other main types and
+// functions used to interact with the Panelist server.
 package panelist
 
 import (
@@ -16,8 +19,7 @@ type Panelist struct {
 	wampClient *wamp_client.Client
 	config     Config
 
-	pages      []Page
-	pageGroups []PageGroup
+	pages []Page
 }
 
 type Config struct {
@@ -42,13 +44,6 @@ func New(config Config) *Panelist {
 // AddPages adds the provided pages and makes them visible to
 // the Panelist server.  This function should be called before Listen.
 func (p *Panelist) AddPages(pages ...Page) error {
-	p.pages = append(p.pages, pages...)
-	return nil
-}
-
-// AddPageGroups adds the provided page groups and makes them visible to
-// the Panelist server.  This function should be called before Listen.
-func (p *Panelist) AddPageGroups(pages ...Page) error {
 	p.pages = append(p.pages, pages...)
 	return nil
 }
