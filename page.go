@@ -10,6 +10,7 @@ import (
 // Page represents a page in the Panelist interface.
 type Page struct {
 	// Name is the unique identifier for the page.  It is used to determine the URL of the page.
+	// It should only contain alphanumeric characters, dashes and underscores.
 	//
 	// required: true
 	Name string

@@ -23,6 +23,8 @@ type Panelist struct {
 type Config struct {
 	// Name of this client.  Should be unique and in [kebab case](https://developer.mozilla.org/en-US/docs/Glossary/Kebab_case).
 	Name string
+	// Workspace is the workspace on the server the client wants to join.
+	Workspace string
 	// Port number of the Panelist server.
 	ServerPort int
 	// Hostname of the Panelist server.
@@ -66,11 +68,6 @@ func (p *Panelist) Listen() (err error) {
 	for _, page := range p.pages {
 		if err := page.Validate(); err != nil {
 			return fmt.Errorf("panelist: one or more of your pages have the error '%w'", err)
-		}
-	}
-	for _, pageGroups := range p.pageGroups {
-		if err := pageGroups.Validate(); err != nil {
-			return fmt.Errorf("panelist: one or more of your page groups have the error '%w'", err)
 		}
 	}
 
